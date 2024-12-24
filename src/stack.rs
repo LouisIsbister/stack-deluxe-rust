@@ -1,4 +1,4 @@
-use crate::value_from_token;
+use crate::extract_value_from_token;
 use crate::utils::{most_generic_type, Token};
 
 pub fn drop(stack: &mut Vec<Token>) {
@@ -36,21 +36,39 @@ pub fn apply_bin_op(
 }
 
 fn bin_int_function(first: Token, second: Token, func: impl Fn(i64, i64) -> i64) -> Token {
-    let (fv, sv) = (value_from_token!(first, i64), value_from_token!(second, i64));
+    let (fv, sv) = (
+        extract_value_from_token!(first, i64), 
+        extract_value_from_token!(second, i64)
+    );
     let res = func(fv, sv);
     Token::Int(res)
 }
 
 fn bin_float_function(first: Token, second: Token, func: impl Fn(f64, f64) -> f64) -> Token {
-    let (fv, sv) = (value_from_token!(first, f64), value_from_token!(second, f64));
+    let (fv, sv) = (
+        extract_value_from_token!(first, f64), 
+        extract_value_from_token!(second, f64)
+    );
     let res = func(fv, sv);
     Token::Float(res)
 }
 
 fn bin_string_function(first: Token, second: Token, func: impl Fn(String, String) -> String) -> Token {
-    let (fv, sv) = (value_from_token!(first, String), value_from_token!(second, String));
+    let (fv, sv) = (
+        extract_value_from_token!(first, String), 
+        extract_value_from_token!(second, String)
+    );
     let res = func(fv, sv);
     Token::Str(res)
+}
+
+fn bin_bool_function(first: Token, second: Token, func: impl Fn(bool, bool) -> bool) -> Token {
+    let (fv, sv) = (
+        extract_value_from_token!(first, bool), 
+        extract_value_from_token!(second, bool)
+    );
+    let res = func(fv, sv);
+    Token::Bool(res)
 }
 
 /// OPERATOR implementations
@@ -60,6 +78,7 @@ pub fn add(first: Token, second: Token) -> Token {
         Token::Int(_) => bin_int_function(first, second, |a, b| a + b),
         Token::Float(_) => bin_float_function(first, second, |a, b| a + b),
         Token::Str(_) => bin_string_function(first, second, |mut a, b| { a.push_str(b.as_str()); a }),
+        Token::Bool(_) => panic!("Cannot add booleans!"),
     }
 }
 
@@ -68,6 +87,7 @@ pub fn sub(first: Token, second: Token) -> Token {
         Token::Int(_) => bin_int_function(first, second, |a, b| a - b),
         Token::Float(_) => bin_float_function(first, second, |a, b| a - b),
         Token::Str(_) => panic!("Cannot perform subtraction on Strings!"),
+        Token::Bool(_) => panic!("Cannot subtract booleans!"),
     }
 }
 
@@ -76,12 +96,13 @@ pub fn mul(first: Token, second: Token) -> Token {
         Token::Int(_) => bin_int_function(first, second, |a, b| a * b),
         Token::Float(_) => bin_float_function(first, second, |a, b| a * b),
         Token::Str(fv) => {
-            let sv = value_from_token!(second, i64);
+            let sv = extract_value_from_token!(second, i64);
             if sv < 0 {
                 panic!("Cannot multiply Strings by negative int!")
             }
             return Token::Str(fv.repeat(sv as usize))
         },
+        Token::Bool(_) => panic!("Cannot multiply booleans!"),
     }
 }
 
@@ -102,6 +123,7 @@ pub fn div(first: Token, second: Token) -> Token {
             }
         }),
         Token::Str(_) => panic!("Cannot perform division on Strings!"),
+        Token::Bool(_) => panic!("Cannot divide booleans!"),
     }
 }
 
@@ -110,6 +132,7 @@ pub fn exp(first: Token, second: Token) -> Token {
         Token::Int(_) => bin_int_function(first, second, |a, b| a.pow(b as u32)),
         Token::Float(_) => bin_float_function(first, second, |a, b| a.powf(b)),
         Token::Str(_) => panic!("Cannot perform expontiation on Strings!"),
+        Token::Bool(_) => panic!("Cannot perform exponentiation on  booleans!"),
     }
 }
 
@@ -118,29 +141,6 @@ pub fn modu(first: Token, second: Token) -> Token {
         Token::Int(_) => bin_int_function(first, second, |a, b| a % b),
         Token::Float(_) => bin_float_function(first, second, |a, b| a % b),
         Token::Str(_) => panic!("Cannot perform modular operation on Strings!"),
+        Token::Bool(_) => panic!("Cannot perform modular operation on booleans!"),
     }
 }
-
-
-
-
-    // let ret_type = most_generic_type(&first, &second);
-    // let (farg, sarg) = match ret_type {
-    //     Token::Int(_) => get_binary_args::<i64>(ret_type, first, second),
-    //     Token::Float(_) => get_binary_args::<f64>(ret_type, first, second),
-    //     Token::Str(_) => get_binary_args::<String>(ret_type, first, second),
-    // };
-
-// fn get_binary_args<T>(ret_type: Token, first: Token, second: Token) -> (Token, Token) {
-//     match ret_type {
-//         Token::Int(_) => {
-//             (Token::Int(value_from_token!(first, i64)), Token::Int(value_from_token!(second, i64)))
-//         },
-//         Token::Float(_) => {
-//             (Token::Int(value_from_token!(first, f64)), Token::Int(value_from_token!(second, f64)))
-//         },
-//         Token::Str(_) => {
-//             (Token::Int(value_from_token!(first, String)), Token::Int(value_from_token!(second, String)))
-//         },
-//     }
-// }
