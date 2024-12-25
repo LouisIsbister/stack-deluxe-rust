@@ -4,9 +4,6 @@ mod utils;
 mod lexer;
 mod stack;
 
-use lexer::{exec_stack, read_stack};
-use utils::Token;
-
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
 
@@ -17,30 +14,34 @@ fn main() {
         1 => (), // exec normally
         2 => {   // file
             let fnum = &args[1];
-            let input_path = format!("input/input-{}.txt", fnum);
-            let expected_path = format!("expected/expected-{}.txt", fnum);
-
-            // read the files in
-            let (input_content, _) = get_file_contents(&input_path);
-            let (_, expected_stack_format) = get_file_contents(&expected_path);
-
-            // execute the input file
-            let input_res = exec(&input_content);
-
-            println!("Expected: {:?}\nGot: {:?}", expected_stack_format, input_res);
-            println!("Result: {}", expected_stack_format == input_res)
+            evaluate_file_stack(&fnum);
         }, 
         _ => (),
     }
 
 }
 
+fn evaluate_file_stack(fnum: &String) {
+    let input_path = format!("input/input-{}.txt", fnum);
+    let expected_path = format!("expected/expected-{}.txt", fnum);
+
+    // read the files in
+    let (input_content, _) = get_file_contents(&input_path);
+    let (_, expected_stack_format) = get_file_contents(&expected_path);
+
+    // execute the input file
+    let input_stack_format = exec(&input_content);
+
+    println!("Expected: {:?}\nGot: {:?}", expected_stack_format, input_stack_format);
+    println!("Result: {}", expected_stack_format == input_stack_format)
+}
+
 fn exec(stack_str: &String) -> Vec<String> {
-    let lexemes = read_stack(stack_str);
-    let res = exec_stack(&lexemes);
+    let lexemes = lexer::read_stack(stack_str);
+    let res = stack::exec_stack(&lexemes);
     
     res.iter()
-        .map(|val| extract_value_from_token!(val, String))
+        .map(|val| utils::extract_value_from_token::<String>(val.clone()))
         .collect::<Vec<String>>()
 }
 

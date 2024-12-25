@@ -91,9 +91,8 @@ mod binary_operator_tests {
 mod stack_exec_tests {
 
     use crate::{
-        lexer::{
-            exec_stack, read_stack
-        }, 
+        lexer::read_stack, 
+        stack::exec_stack,
         utils::Token
     };
 
@@ -103,7 +102,7 @@ mod stack_exec_tests {
         let lexemes = read_stack(&input);
 
         let res = exec_stack(&lexemes);
-        assert!(res == vec![
+        assert_eq!(res, vec![
             Token::Int(1), Token::Int(2), Token::Int(2)
         ])
     }
@@ -117,5 +116,24 @@ mod stack_exec_tests {
         assert_eq!(res, vec![Token::Float(-21.0)])
     }
 
+    #[test]
+    fn test_exec_rolld() {
+        let input = "0 1 2 3 4 4 ROLLD".to_string();
+        let lexemes = read_stack(&input);
+
+        let res = exec_stack(&lexemes);
+        assert_eq!(res, vec![
+            Token::Int(0), Token::Int(4), Token::Int(1), Token::Int(2), Token::Int(3)
+        ])
+    }
+
+    #[test]
+    fn test_exec_equ() {
+        let input = "1.0 1 ==".to_string();
+        let lexemes = read_stack(&input);
+
+        let res = exec_stack(&lexemes);
+        assert_eq!(res[0], Token::Bool(true))
+    }
     
 }
